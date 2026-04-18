@@ -1,0 +1,16 @@
+<configuration>
+    <input>
+        <net-file value="../network/city.net.xml"/>
+        <route-files value="../routes/updated.rou.xml"/>
+    </input>
+
+    <time>
+        <begin value="0"/>
+        <end value="10000"/>
+        <step-length value="1"/> </time>
+
+    <processing>
+        <time-to-teleport value="-1"/>
+        <no-step-log value="true"/>
+    </processing>
+</configuration>
