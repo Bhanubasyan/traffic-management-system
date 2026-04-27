@@ -52,14 +52,11 @@
 
 ## 📊 Benchmark Results (Final Test)
 
-
-┌────────────────────────────────────────────────────────┐
-│  METRIC                    │         VALUE             │
-├────────────────────────────┼───────────────────────────┤
-│ 🚗 Vehicles Processed      │  576                      │
-│ ⏱️ Avg Time per Vehicle    │  33 Seconds (Reduced 50%) │
-│ ⚖️ Lane Balance       │  Highly Balanced       │
-└────────────────────────────────────────────────────────┘
+| Metric | Value |
+|-------|------|
+| 🚗 Vehicles Processed | 576 |
+| ⏱️ Avg Time per Vehicle | 33 Seconds (Reduced 50%) |
+| ⚖️ Lane Balance | Highly Balanced |
 
 
 ---
@@ -67,12 +64,29 @@
 
 TCS/
 ├── rl/
-│ ├── traffic_env.py # RL Environment Wrapper
-│ ├── train.py # Training Script
-│ └── test_model.py # GUI Testing Script
-├── models/ # Saved PPO Models (.zip)
-├── config/ # SUMO Configuration Files
-└── network/ # Map and Road Network Files
+│   ├── traffic_env.py     # RL Environment (SUMO + Gym)
+│   ├── train.py           # PPO Training Script
+│   └── test_model.py      # Testing with GUI
+│
+├── models/
+│   ├── ppo_22000.zip      # Final trained model
+│   └── vec_normalize.pkl  # Normalization stats
+│
+├── config/
+│   └── simulation.sumocfg # SUMO simulation config
+│
+├── network/
+│   ├── city.net.xml       # Road network
+│   └── routes.rou.xml     # Traffic routes
+│
+├── assets/
+│   ├── 1200_sec.png
+│   ├── 600_sec.png
+│   └── 300_sec.png
+│
+├── main.py                # Final simulation runner
+├── README.md              # Project documentation
+└── requirements.txt       # Dependencies
 
 ---
 
@@ -103,17 +117,17 @@ Reward=−(0.05⋅W)−(0.5⋅Q)+(10.0⋅P)
 
 ## 🔮 Future Roadmap
 
-[ ] Multi-Agent RL: Controlling multiple intersections simultaneously.
+[1] Multi-Agent RL: Controlling multiple intersections simultaneously.
 
-[ ] Yellow Phase: Adding transition safety periods.
+[2] Yellow Phase: Adding transition safety periods.
 
-[ ] Dashboard: Web-based analytics for traffic engineers.
+[3] Dashboard: Web-based analytics for traffic engineers.
 
 ---
 
 ## 👨‍💻 Author
 
-Bhanu Basyan  
+Bhanu  
 Full-Stack Developer & AI Enthusiast
 
 <p align="center"> 
