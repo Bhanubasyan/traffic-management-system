@@ -42,35 +42,39 @@ env = VecNormalize(
 
 
 # ================= PPO MODEL =================
-model = PPO(
-    "MlpPolicy",
-    env,
-    verbose=1,
+model_path = "../models/ppo_15000.zip"
 
-    # 🔧 LEARNING CONTROL
-    learning_rate=0.001,        # faster learning than 0.0003
-    n_steps=2048,               # more stable updates
-    batch_size=128,             # better gradient estimate
+if os.path.exists(model_path):
+    print("✅ Loading previous model ")
+    model = PPO.load(model_path, env=env)
 
-    # 🔧 RL CORE
-    gamma=0.99,
-    gae_lambda=0.95,
+    # 🔥 FORCE NEW LEARNING RATE
+    model.learning_rate = 0.0005
+    model.lr_schedule = lambda _: 0.0005
 
-    # 🔧 PPO BEHAVIOR
-    clip_range=0.2,
-    ent_coef=0.02,              # more exploration (important for traffic)
-    vf_coef=0.5,
-
-    # 🔧 STABILITY
-    max_grad_norm=0.5,
-)
-
+else:
+    print("⚠️ No previous model found, starting fresh")
+    model = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        learning_rate=0.0005,
+        n_steps=2048,
+        batch_size=128,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        ent_coef=0.02,
+        vf_coef=0.5,
+        max_grad_norm=0.5,
+    )
 
 # ================= TRAIN =================
 callback = SaveCallback(save_path="../models")
 
-print("🚀 Training starting... (100k steps recommended)")
-model.learn(total_timesteps=100000, callback=callback)
+print("🚀 Training starting... (50k steps recommended)")
+model.learn(total_timesteps=50000, callback=callback , reset_num_timesteps=False
+)
 
 
 # ================= SAVE FINAL =================

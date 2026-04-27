@@ -90,6 +90,15 @@ class TrafficEnv(gym.Env):
         current_wait = self._get_waiting_time()
         queue_length = self._get_queue_length()
         arrived = traci.simulation.getArrivedNumber()
+        # ===== EMISSION (NEW) =====
+        vehicle_ids = traci.vehicle.getIDList()
+
+        total_emission = 0
+        for v in vehicle_ids:
+             total_emission += traci.vehicle.getCO2Emission(v)
+
+        normalized_emission = total_emission / 1000
+
 
         # ===== REWARD =====
         reward = (self.prev_wait - current_wait)
@@ -133,6 +142,11 @@ class TrafficEnv(gym.Env):
            reward += 1
         reward = reward / 100.0
 
+        # 🌿 Emission penalty (SAFE WEIGHT)
+        reward -= 0.1 * normalized_emission
+        # 🚗 Flow reward (keep traffic moving)
+        reward += 0.02 * arrived
+        
         self.prev_wait = current_wait
 
         self.step_count += 1

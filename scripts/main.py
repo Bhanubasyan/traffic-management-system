@@ -3,6 +3,8 @@ import os
 import numpy as np
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "rl")))
+
+emission_history = []
 # ================= RL ENABLE =================
 USE_RL = True
 
@@ -19,7 +21,7 @@ if USE_RL:
         env.norm_reward = False
 
         # ===== LOAD MODEL =====
-        model = PPO.load("models/ppo_43000", env=env)
+        model = PPO.load("models/ppo_22000", env=env)
 
         print("✅ RL Model Loaded Successfully")
 
@@ -90,7 +92,19 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
     traci.simulationStep()
 
+    # ✅ EMISSION BLOCK (ADD HERE)
     vehicles = traci.vehicle.getIDList()
+
+    total_emission = 0
+    for v in vehicles:
+         total_emission += traci.vehicle.getCO2Emission(v)
+
+    emission_history.append(total_emission)
+    normalized_emission = total_emission / 1000
+   # print("🌿 CO2 Emission:", total_emission , "| Normalized:", normalized_emission)
+
+
+    
 
     # ===== Track vehicles =====
     for v in vehicles:
@@ -118,6 +132,8 @@ while traci.simulation.getMinExpectedNumber() > 0:
                     traci.lane.getWaitingTime(l)
                     for l in traci.lane.getIDList()
                 )
+                
+                # normalized_emission = total_emission / 1000
 
                 queue_length = sum(
                     traci.lane.getLastStepHaltingNumber(l)
@@ -132,6 +148,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
                     waiting_time / 1000.0,
                     queue_length / 50.0,
                     vehicle_count / 100.0,
+                   
                     current_phase / 4.0
                 ], dtype=np.float32)
 
@@ -259,12 +276,27 @@ print(f"Total Vehicles Passed: {total_vehicles_passed}")
 
 avg_time = (total_time_spent / total_vehicles_passed) if total_vehicles_passed > 0 else 0
 
+# 🌿 EMISSION RESULT
+total_co2 = sum(emission_history)
+avg_co2 = total_co2 / (len(emission_history) + 1e-6)
+
+max_co2 = max(emission_history)
+min_co2 = min(emission_history)
+
+print(f"🌿 Max CO2: {max_co2:.2f}")
+print(f"🌿 Min CO2: {min_co2:.2f}")
+
+print(f"\n🌿 Total CO2 Emission: {total_co2:.2f}")
+print(f"🌿 Average CO2 per Step: {avg_co2:.2f}")
+
+
 print("\n📍 Lane-wise Vehicle Count:")
 for lane, count in lane_pass_count.items():
     print(f"{lane} → {count}")
 
 print(f"\n⏱ Total Time Spent: {total_time_spent:.2f}")
 print(f"⏱ Average Time per Vehicle: {avg_time:.2f}")
+
 
 print("=========================================\n")
 

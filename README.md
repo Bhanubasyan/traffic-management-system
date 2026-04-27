@@ -59,7 +59,8 @@
 │ ⚖️ Lane Balance       │  Highly Balanced       │
 └────────────────────────────────────────────────────────┘
 
-## Project Architecture
+ ---
+##  Project Architecture
 
 TCS/
 ├── rl/
