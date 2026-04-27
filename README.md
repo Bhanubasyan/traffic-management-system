@@ -130,10 +130,10 @@ Reward=−(0.05⋅W)−(0.5⋅Q)+(10.0⋅P)
 Bhanu  
 Full-Stack Developer & AI Enthusiast
 
-<p align="center"> 
-<a href="https://www.google.com/search?q=https://github.com/Bhanubasyan"> 
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/GitHub-Profile-181717%3Fstyle%3Dflat%26logo%3Dgithub"/> 
-</a> 
+<p align="center">
+  <a href="https://github.com/Bhanubasyan">
+    <img src="https://img.shields.io/badge/GitHub-Profile-181717?style=flat&logo=github"/>
+  </a>
 </p>
 
 <p align="center">🚀 Built with passion for AI & Smart Cities</p>
