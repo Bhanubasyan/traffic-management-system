@@ -33,9 +33,9 @@
 
 | Duration | Result |
 |---------|--------|
-| **1200 sec** | ![](assests/Screenshot 2026-04-27 142041.png) |
-| **600 sec**  | ![](assests/Screenshot 2026-04-27 142250.png) |
-| **300 sec**  | ![](assests/Screenshot 2026-04-27 142400.png) |
+| **1200 sec** | <img src="assets/1200_sec.png" width="300"/> |
+| **600 sec**  | <img src="assets/600_sec.png" width="300"/> |
+| **300 sec**  | <img src="assets/300_sec.png" width="300"/> |
 ---
 
 ## 🚀 Key Features
