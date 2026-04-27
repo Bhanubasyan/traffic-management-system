@@ -31,9 +31,11 @@
 
 ## 🖼️ Simulation Gallery
 
-| 🚦 Active Simulation | 🚗 Traffic Flow Analysis |
-|:---:|:---:|
-| ![Sim1](./assests/Screenshot%202026-04-18%20154009.png) | ![Sim2](./assests/Screenshot%202026-04-18%20154131.png) |
+| Duration | Result |
+|---------|--------|
+| **1200 sec** | ![](assets/Screenshot%202026-04-27%20142041.png) |
+| **600 sec**  | ![](assets/Screenshot%202026-04-27%20142250.png) |
+| **300 sec**  | ![](assets/Screenshot%202026-04-27%20142400.png) |
 
 ---
 
@@ -50,7 +52,7 @@
 
 ## 📊 Benchmark Results (Final Test)
 
-```text
+
 ┌────────────────────────────────────────────────────────┐
 │  METRIC                    │         VALUE             │
 ├────────────────────────────┼───────────────────────────┤
@@ -59,56 +61,65 @@
 │ ⚖️ Lane Balance       │  Highly Balanced       │
 └────────────────────────────────────────────────────────┘
 
- ---
-##  Project Architecture
+
+---
+## 🏗️ Project Architecture
 
 TCS/
 ├── rl/
-│   ├── traffic_env.py   # RL Environment Wrapper
-│   ├── train.py         # Training Script
-│   └── test_model.py    # GUI Testing Script
-├── models/              # Saved PPO Models (.zip)
-├── config/              # SUMO Configuration Files
-└── network/             # Map and Road Network Files
+│ ├── traffic_env.py # RL Environment Wrapper
+│ ├── train.py # Training Script
+│ └── test_model.py # GUI Testing Script
+├── models/ # Saved PPO Models (.zip)
+├── config/ # SUMO Configuration Files
+└── network/ # Map and Road Network Files
 
 ---
 
-## Installation & Usage
+## ⚙️ Installation & Usage
 
-## 1. Install Dependencies
+### 1. Install Dependencies
 pip install stable-baselines3 gymnasium
 
-## 2. Train the AI Agent
+### 2. Train the AI Agent
 python rl/train.py
 
-## 3. Run Simulation with GUI
+### 3. Run Simulation with GUI
 python rl/test_model.py
 
 ---
 
 ## 🧪 Technical Deep Dive
-State Space: [Waiting Time, Queue Length, Vehicle Count, Current Phase]Action Space: Discrete(4) (Selecting the optimal traffic phase)Reward Function:$$Reward = -(0.05 \cdot W) - (0.5 \cdot Q) + (10.0 \cdot P)$$(Where $W$=Wait time, $Q$=Queue, $P$=Passed vehicles)
+
+State Space: [Waiting Time, Queue Length, Vehicle Count, Current Phase]  
+Action Space: Discrete(4) (Selecting the optimal traffic phase)
+
+Reward Function:  
+Reward=−(0.05⋅W)−(0.5⋅Q)+(10.0⋅P)
+
+(Where $W$=Wait time, $Q$=Queue, $P$=Passed vehicles)
 
 ---
 
 ## 🔮 Future Roadmap
+
 [ ] Multi-Agent RL: Controlling multiple intersections simultaneously.
 
 [ ] Yellow Phase: Adding transition safety periods.
 
 [ ] Dashboard: Web-based analytics for traffic engineers.
 
-
 ---
 
 ## 👨‍💻 Author
-Bhanu Basyan
+
+Bhanu Basyan  
 Full-Stack Developer & AI Enthusiast
 
-<p align="center">
-<a href="https://www.google.com/search?q=https://github.com/your-username">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/GitHub-Profile-181717%3Fstyle%3Dflat%26logo%3Dgithub"/>
-</a>
+<p align="center"> 
+<a href="https://www.google.com/search?q=https://github.com/your-username"> 
+<img src="https://www.google.com/search?q=https://img.shields.io/badge/GitHub-Profile-181717%3Fstyle%3Dflat%26logo%3Dgithub"/> 
+</a> 
 </p>
 
 <p align="center">🚀 Built with passion for AI & Smart Cities</p>

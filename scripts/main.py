@@ -87,7 +87,7 @@ def predict_traffic(lane, current_density):
 # ================= MAIN LOOP =================
 while traci.simulation.getMinExpectedNumber() > 0:
 
-    if traci.simulation.getTime() - start_time >= 1200:
+    if traci.simulation.getTime() - start_time >= 300:
         break
 
     traci.simulationStep()
