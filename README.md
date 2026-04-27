@@ -33,10 +33,9 @@
 
 | Duration | Result |
 |---------|--------|
-| **1200 sec** | ![](assets/Screenshot%202026-04-27%20142041.png) |
-| **600 sec**  | ![](assets/Screenshot%202026-04-27%20142250.png) |
-| **300 sec**  | ![](assets/Screenshot%202026-04-27%20142400.png) |
-
+| **1200 sec** | ![](assests/Screenshot 2026-04-27 142041.png) |
+| **600 sec**  | ![](assests/Screenshot 2026-04-27 142250.png) |
+| **300 sec**  | ![](assests/Screenshot 2026-04-27 142400.png) |
 ---
 
 ## 🚀 Key Features
