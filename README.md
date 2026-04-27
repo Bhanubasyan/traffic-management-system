@@ -131,7 +131,7 @@ Bhanu
 Full-Stack Developer & AI Enthusiast
 
 <p align="center"> 
-<a href="https://www.google.com/search?q=https://github.com/your-username"> 
+<a href="https://www.google.com/search?q=https://github.com/Bhanubasyan"> 
 <img src="https://www.google.com/search?q=https://img.shields.io/badge/GitHub-Profile-181717%3Fstyle%3Dflat%26logo%3Dgithub"/> 
 </a> 
 </p>
