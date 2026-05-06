@@ -33,9 +33,9 @@
 
 | Duration | Result |
 |---------|--------|
-| **1200 sec** | <img src="assets/1200_sec.png" width="300"/> |
-| **600 sec**  | <img src="assets/600_sec.png" width="300"/> |
-| **300 sec**  | <img src="assets/300_sec.png" width="300"/> |
+| **1200 sec** | <img src="SingleJunction/assets/1200_sec.png" width="300"/> |
+| **600 sec**  | <img src="SingleJunction/assets/600_sec.png" width="300"/> |
+| **300 sec**  | <img src="SingleJunction/assets/300_sec.png" width="300"/> |
 ---
 
 ## 🚀 Key Features
