@@ -1,5 +1,21 @@
-__pycache__/ 
-*.pyc 
-models/*.zip 
-models/*.pkl 
-*.log 
+# Python cache
+__pycache__/
+*.pyc
+
+# Model files
+*.zip
+*.pkl
+
+# Logs
+*.log
+log.txt
+
+# Environment files
+.env
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

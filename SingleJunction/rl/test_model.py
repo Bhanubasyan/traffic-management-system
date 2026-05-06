@@ -3,30 +3,36 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from traffic_env import TrafficEnv
 import traci
 import numpy as np
+import csv
+import random
 
 # ================= SETTINGS =================
 MODEL_PATH = "../models/ppo_22000_old"
-USE_MAIN_LOGIC = True   # 🔥 True = main.py logic, False = old test
+USE_MAIN_LOGIC = True
 
-# ================= ENV =================
-env = DummyVecEnv([lambda: TrafficEnv()])
-env = VecNormalize.load("../models/vec_normalize.pkl", env)
+# ================= FUNCTION WRAPPER =================
+def run_simulation(run_id, sim_time, scenario):   # 🔥 added sim_time + scenario
 
-env.training = False
-env.norm_reward = False
+    print(f"\n🚀 Run {run_id} | Scenario: {scenario} | Time: {sim_time}s\n")
 
-# GUI
-env.envs[0].sumo_cmd[0] = "sumo-gui"
+    # ===== RANDOMNESS =====
+    np.random.seed()
+    random.seed()
 
-# ================= LOAD MODEL =================
-model = PPO.load(MODEL_PATH, env=env)
+    # ================= ENV =================
+    env = DummyVecEnv([lambda: TrafficEnv()])
+    env = VecNormalize.load("../models/vec_normalize.pkl", env)
 
-print(f"🚀 Testing started for model: {MODEL_PATH}\n")
+    env.training = False
+    env.norm_reward = False
 
-# =========================================================
-# ================= MAIN.PY STYLE TEST =====================
-# =========================================================
-if USE_MAIN_LOGIC:
+    env.envs[0].sumo_cmd[0] = "sumo-gui"
+
+    # 🔥 add SUMO randomness
+    env.envs[0].sumo_cmd += ["--seed", str(np.random.randint(1,10000))]
+
+    # ================= LOAD MODEL =================
+    model = PPO.load(MODEL_PATH, env=env)
 
     obs = env.reset()
     start_time = traci.simulation.getTime()
@@ -34,6 +40,7 @@ if USE_MAIN_LOGIC:
     model.current_phase = 0
     model.last_action_time = 0
 
+    # ===== RESET TRACKERS =====
     emission_history = []
     total_vehicles_passed = 0
     total_time_spent = 0
@@ -45,9 +52,11 @@ if USE_MAIN_LOGIC:
 
     tls_ids = traci.trafficlight.getIDList()
 
+    # ================= MAIN LOOP =================
     while traci.simulation.getMinExpectedNumber() > 0:
 
-        if traci.simulation.getTime() - start_time >= 1000:
+        # 🔥 dynamic simulation time
+        if traci.simulation.getTime() - start_time >= sim_time:
             break
 
         traci.simulationStep()
@@ -87,7 +96,8 @@ if USE_MAIN_LOGIC:
 
             state = env.normalize_obs(state)
 
-            action, _ = model.predict(state, deterministic=True)
+            # 🔥 IMPORTANT FIX (variation)
+            action, _ = model.predict(state, deterministic=False)
 
             if action == 1:
                 model.current_phase = 2 if model.current_phase == 0 else 0
@@ -111,62 +121,52 @@ if USE_MAIN_LOGIC:
                 lane_pass_count[lane] = lane_pass_count.get(lane, 0) + 1
 
     # ===== RESULT =====
-    print("\n========== 🚦 MAIN MODE RESULT ==========")
-
     avg_time = total_time_spent / (total_vehicles_passed + 1e-6)
     total_co2 = sum(emission_history)
-    avg_co2 = total_co2 / len(emission_history)
+    avg_co2 = total_co2 / (len(emission_history) + 1e-6)
 
-    print(f"Total Vehicles Passed: {total_vehicles_passed}")
-    print(f"🌿 Total CO2 Emission: {total_co2:.2f}")
-    print(f"🌿 Average CO2 per Step: {avg_co2:.2f}")
-    print(f"⏱ Average Time per Vehicle: {avg_time:.2f}")
+    print(f"Run {run_id} → Vehicles: {total_vehicles_passed}, Avg Time: {avg_time:.2f}")
 
-    print("=========================================\n")
+    traci.close()
 
-# =========================================================
-# ================= OLD TEST MODE ==========================
-# =========================================================
-else:
+    return {
+        "Run_ID": run_id,
+        "Scenario": scenario,              # 🔥 added
+        "Simulation_Time": sim_time,       # 🔥 added
+        "Vehicles_Passed": total_vehicles_passed,
+        "Avg_Travel_Time": avg_time,
+        "Total_CO2": total_co2,
+        "Avg_CO2": avg_co2
+    }
 
-    obs = env.reset()
-    start_time = traci.simulation.getTime()
 
-    total_reward = 0
-    emission_history = []
-    total_vehicles_passed = 0
-    total_time_spent = 0
+# ================= MULTI RUN =================
+if __name__ == "__main__":
 
-    while True:
-        action, _ = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
+    NUM_RUNS = 3
+    SIM_TIMES = [60, 120, 300]
 
-        total_reward += reward[0]
-        total_vehicles_passed += traci.simulation.getArrivedNumber()
+    # 🔥 you manually control traffic → just label it
+    SCENARIOS = ["Low", "Medium", "High"]  
 
-        total_time_spent += sum(
-            traci.lane.getWaitingTime(l)
-            for l in traci.lane.getIDList()
-        )
+    all_results = []
+    run_id = 1
 
-        vehicles = traci.vehicle.getIDList()
-        total_emission = sum(traci.vehicle.getCO2Emission(v) for v in vehicles)
-        emission_history.append(total_emission)
+    for scenario in SCENARIOS:
+        for sim_time in SIM_TIMES:
+            for _ in range(NUM_RUNS):
 
-        if traci.simulation.getTime() - start_time >= 1200:
-            break
+                result = run_simulation(run_id, sim_time, scenario)
+                all_results.append(result)
 
-    print("\n========== 🚦 TEST MODE RESULT ==========")
+                run_id += 1
 
-    avg_time = total_time_spent / (total_vehicles_passed + 1e-6)
-    total_co2 = sum(emission_history)
-    avg_co2 = total_co2 / len(emission_history)
+    # ===== SAVE =====
+    keys = all_results[0].keys()
 
-    print(f"Total Vehicles Passed: {total_vehicles_passed}")
-    print(f"🌿 Total CO2 Emission: {total_co2:.2f}")
-    print(f"🌿 Average CO2 per Step: {avg_co2:.2f}")
-    print(f"⏱ Average Time per Vehicle: {avg_time:.2f}")
+    with open("results.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=keys)
+        writer.writeheader()
+        writer.writerows(all_results)
 
-    print("=========================================\n")
-
-traci.close()
+    print("\n✅ All runs completed & saved to results.csv")

@@ -35,10 +35,10 @@ class TrafficEnv(gym.Env):
         self.prev_wait = 0
         self.current_phase = 0
 
-        # 🔥 NEW: GREEN TIME CONTROL
+        # Green time control
         self.green_duration = 0
-        self.min_green = 2    # 10 sec (2 steps × 5 sec)
-        self.max_green = 18   # 90 sec (18 steps × 5 sec)
+        self.min_green = 2
+        self.max_green = 18
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -66,20 +66,14 @@ class TrafficEnv(gym.Env):
         # ===== GREEN TIME CONTROL =====
         self.green_duration += 1
 
-        # ❌ Min time not reached → no switching
         if self.green_duration < self.min_green:
             action = 0
-
-        # 🔥 Max time reached → force switch
         elif self.green_duration >= self.max_green:
             action = 1
 
-        # ===== APPLY ACTION =====
         if action == 1:
             self.current_phase = 2 if self.current_phase == 0 else 0
             self.green_duration = 0
-        else:
-            pass
 
         traci.trafficlight.setPhase(tls_id, self.current_phase)
 
@@ -90,65 +84,67 @@ class TrafficEnv(gym.Env):
         current_wait = self._get_waiting_time()
         queue_length = self._get_queue_length()
         arrived = traci.simulation.getArrivedNumber()
-        # ===== EMISSION (NEW) =====
+
         vehicle_ids = traci.vehicle.getIDList()
 
-        total_emission = 0
-        for v in vehicle_ids:
-             total_emission += traci.vehicle.getCO2Emission(v)
-
+        total_emission = sum(traci.vehicle.getCO2Emission(v) for v in vehicle_ids)
         normalized_emission = total_emission / 1000
 
+        lane_queues = [traci.lane.getLastStepHaltingNumber(l) for l in traci.lane.getIDList()]
+        lane_waits = [traci.lane.getWaitingTime(l) for l in traci.lane.getIDList()]
 
         # ===== REWARD =====
-        reward = (self.prev_wait - current_wait)
+        reward = 0
+
+        # Global traffic pressure
+        reward -= 1.5 * queue_length
+
+        # Waiting time
+        reward -= 0.05 * current_wait
 
         # Throughput
-        reward += 2 * arrived
-
-        # Waiting penalty
-        reward -= 0.01 * current_wait
-
-        # Queue penalty
-        reward -= 0.3 * queue_length
+        reward += 5 * arrived
 
         # Fairness
-        lane_queues = [
-            traci.lane.getLastStepHaltingNumber(l)
-            for l in traci.lane.getIDList()
-        ]
         if len(lane_queues) > 0:
             imbalance = max(lane_queues) - min(lane_queues)
             reward -= 0.5 * imbalance
 
-        # Starvation penalty
-        lane_waits = [
-            traci.lane.getWaitingTime(l)
-            for l in traci.lane.getIDList()
-        ]
-        if len(lane_waits) > 0 and max(lane_waits) > 200:
-            reward -= 10
-
-        # Slight switching penalty
+        # Switching penalty
         if action == 1:
-            reward -= 0.8
-        # 🔥 Reward correct switching when queue is high
-        if queue_length > 10 and self.green_duration > self.min_green:
-                if action == 1:
-                 reward += 2
+            reward -= 2
 
-         #  Reward holding when traffic is smooth
-        if queue_length < 6 and action == 0:
-           reward += 1
+        # Starvation
+        if len(lane_waits) > 0 and max(lane_waits) > 200:
+            reward -= 20
+
+        # Emission
+        reward -= 0.1 * normalized_emission
+
+        # Green wave (flow)
+        moving = sum(1 for v in vehicle_ids if traci.vehicle.getSpeed(v) > 5)
+        reward += 0.5 * moving
+
+        # Stop penalty
+        stopped = sum(1 for v in vehicle_ids if traci.vehicle.getSpeed(v) < 0.1)
+        reward -= 0.2 * stopped
+
+        # Delay reduction
+        reward += (self.prev_wait - current_wait)
+
+        # Idle green
+        if queue_length == 0 and action == 0:
+            reward -= 2
+
+        # Max wait penalty
+        if len(lane_waits) > 0 and max(lane_waits) > 300:
+            reward -= 30
+
+        # Normalize
         reward = reward / 100.0
 
-        # 🌿 Emission penalty (SAFE WEIGHT)
-        reward -= 0.1 * normalized_emission
-        # 🚗 Flow reward (keep traffic moving)
-        reward += 0.02 * arrived
-        
+        # update
         self.prev_wait = current_wait
-
         self.step_count += 1
         done = self.step_count >= self.max_steps
 
@@ -171,16 +167,10 @@ class TrafficEnv(gym.Env):
         return np.array([waiting, queue, vehicles, phase], dtype=np.float32)
 
     def _get_waiting_time(self):
-        return sum(
-            traci.lane.getWaitingTime(lane)
-            for lane in traci.lane.getIDList()
-        )
+        return sum(traci.lane.getWaitingTime(lane) for lane in traci.lane.getIDList())
 
     def _get_queue_length(self):
-        return sum(
-            traci.lane.getLastStepHaltingNumber(lane)
-            for lane in traci.lane.getIDList()
-        )
+        return sum(traci.lane.getLastStepHaltingNumber(lane) for lane in traci.lane.getIDList())
 
     def close(self):
         if traci.isLoaded():
