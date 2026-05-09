@@ -54,6 +54,7 @@ last_switch = {}
 prev_density = {}
 rerouted = set()
 
+
 # ================= RL TRACKING =================
 if USE_RL:
     model.current_phase = 0
@@ -67,7 +68,7 @@ lane_pass_count = {}
 total_vehicles_passed = 0
 total_time_spent = 0
 vehicle_last_lane = {}
-
+vehicle_waiting = {}
 
 # ================= HELPER FUNCTIONS =================
 def calculate_green_time(priority):
@@ -107,9 +108,22 @@ while traci.simulation.getMinExpectedNumber() > 0:
     
 
     # ===== Track vehicles =====
+   
     for v in vehicles:
+
+        # entry time
         if v not in vehicle_entry_time:
             vehicle_entry_time[v] = traci.simulation.getTime()
+
+        # accumulated waiting time
+        waiting = traci.vehicle.getAccumulatedWaitingTime(v)
+
+        vehicle_waiting[v] = max(
+            vehicle_waiting.get(v, 0),
+            waiting
+        )
+
+        # last lane
         try:
             vehicle_last_lane[v] = traci.vehicle.getLaneID(v)
         except:
@@ -273,6 +287,17 @@ while traci.simulation.getMinExpectedNumber() > 0:
 print("\n========== 🚦 SIMULATION RESULT ==========")
 
 print(f"Total Vehicles Passed: {total_vehicles_passed}")
+SIM_TIME = 300
+
+# ================= WAITING TIME =================
+total_wait = sum(vehicle_waiting.values())
+
+avg_wait = (
+    total_wait / total_vehicles_passed
+    if total_vehicles_passed > 0 else 0
+)
+
+print(f"\n⏳ Average Waiting Time: {avg_wait:.2f}")
 
 avg_time = (total_time_spent / total_vehicles_passed) if total_vehicles_passed > 0 else 0
 
@@ -296,6 +321,15 @@ for lane, count in lane_pass_count.items():
 
 print(f"\n⏱ Total Time Spent: {total_time_spent:.2f}")
 print(f"⏱ Average Time per Vehicle: {avg_time:.2f}")
+# ================= FUEL CONSUMPTION =================
+fuel_consumption = avg_wait * 0.0002 * total_vehicles_passed
+
+print(f"\n⛽ Total Fuel Consumption: {fuel_consumption:.6f} ml")
+
+# ================= THROUGHPUT =================
+throughput = total_vehicles_passed / SIM_TIME
+
+print(f"\n🚗 Traffic Throughput: {throughput:.2f} vehicles/sec")
 
 
 print("=========================================\n")

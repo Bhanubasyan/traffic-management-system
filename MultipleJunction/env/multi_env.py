@@ -152,31 +152,32 @@ class MultiTrafficEnv(gym.Env):
         normalized_emission = total_emission / 1000
 
         reward = 0
-        reward -= 0.3 * total_queue
-        reward -= 0.01 * total_wait
+        reward -= 0.15 * total_queue
+        reward -= 0.03 * (total_wait / (len(vehicle_ids) + 1))
         reward += 3 * total_arrived
 
         if lane_queues:
             imbalance = max(lane_queues) - min(lane_queues)
-            reward -= 0.2 * imbalance
+            reward -= 0.7 * imbalance
 
-        if lane_waits and max(lane_waits) > 200:
-            reward -= 5
-
+        
+        if lane_waits:  #and max(lane_waits) > 200:
+            reward -= 0.8 * max(lane_waits)
+        
         reward -= 0.02 * normalized_emission
         reward += 0.2 * moving
-        reward -= 0.1 * stopped
-
+        reward -= 0.1 * stopped 
+        reward -= 0.4 * max(lane_queues)
         reward += (getattr(self, "prev_wait", total_wait) - total_wait)
 
         self.prev_reward = getattr(self, "prev_reward", 0)
-        reward = 0.7 * self.prev_reward + 0.3 * reward
+        reward = 0.3 * self.prev_reward + 0.7 * reward
         self.prev_reward = reward
 
-        reward = np.clip(reward, -30, 30)
+        reward = np.clip(reward, -100, 100)
         self.prev_wait = total_wait
 
-        return float(reward / 30.0)
+        return float(reward / 100.0)
 
     # ================= CLOSE =================
     def close(self):
