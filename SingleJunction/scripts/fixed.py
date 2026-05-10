@@ -1,6 +1,6 @@
 import traci
 import os
-
+import random
 # =========================================================
 #               FIXED TRAFFIC CONTROL MODEL
 # =========================================================
@@ -18,14 +18,15 @@ import os
 
 
 # ================= START SUMO =================
-sumoCmd = ["sumo-gui", "-c", "config/simulation.sumocfg"]
+sumoCmd = ["sumo-gui", "-c", "config/simulation.sumocfg" , "--seed",
+    str(random.randint(1, 100000))]
 traci.start(sumoCmd)
 
 # ================= TRAFFIC LIGHT IDS =================
 tls_ids = traci.trafficlight.getIDList()
 
 # ================= SIMULATION PARAMETERS =================
-SIM_TIME = 300
+SIM_TIME = 1200
 
 # ================= FIXED SIGNAL TIMING =================
 GREEN_TIME = 20
@@ -174,31 +175,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
         #               FUEL CONSUMPTION
         # =================================================
         try:
-
-            vtype = traci.vehicle.getTypeID(v).lower()
-
-            rate = 0.0002
-
-            if "car" in vtype:
-                rate = fuel_rate["car"]
-
-            elif "bus" in vtype:
-                rate = fuel_rate["bus"]
-
-            elif "truck" in vtype:
-                rate = fuel_rate["truck"]
-
-            elif "rickshaw" in vtype:
-                rate = fuel_rate["rickshaw"]
-
-            elif "motorcycle" in vtype:
-                rate = fuel_rate["motorcycle"]
-
-            else:
-                rate = fuel_rate["bike"]
-
-            fuel_consumption += waiting * rate
-
+            fuel_consumption += traci.vehicle.getFuelConsumption(v)
         except:
             pass
 
@@ -224,7 +201,7 @@ while traci.simulation.getMinExpectedNumber() > 0:
         # fixed cycle
         cycle_time = GREEN_TIME + YELLOW_TIME
 
-        if current_time % cycle_time == 0:
+        if current_time % (cycle_time + hash(tl) % 5) == 0:
 
             current_phase = current_phase_index[tl]
 
@@ -258,22 +235,25 @@ while traci.simulation.getMinExpectedNumber() > 0:
             )
 
     # =====================================================
-    #               EXIT TRACKING
+    #               EXIT TRACKING (FIXED)
     # =====================================================
-    current_vehicles = set(traci.vehicle.getIDList())
 
-    for v in list(vehicle_entry_time.keys()):
+    arrived_vehicles = traci.simulation.getArrivedIDList()
 
-        if v not in current_vehicles and v not in vehicle_exit_time:
+    for v in arrived_vehicles:
+
+        if v not in vehicle_exit_time:
 
             exit_t = current_time
 
             vehicle_exit_time[v] = exit_t
 
             # travel time
-            travel_time = exit_t - vehicle_entry_time[v]
+            if v in vehicle_entry_time:
 
-            total_travel_time += travel_time
+                travel_time = exit_t - vehicle_entry_time[v]
+
+                total_travel_time += travel_time
 
             total_vehicles_passed += 1
 
@@ -284,72 +264,62 @@ while traci.simulation.getMinExpectedNumber() > 0:
                 lane_pass_count.get(lane, 0) + 1
             )
 
+
 # =========================================================
 #                   FINAL RESULT
 # =========================================================
-print("\n========== 🚦 FIXED SIGNAL RESULT ==========")
 
-print(f"\nSimulation Time: {SIM_TIME} sec")
-
-print(f"\nTotal Vehicles Passed: {total_vehicles_passed}")
-
-# =========================================================
-#               AVERAGE WAITING TIME
-# =========================================================
+# Average Waiting Time
 total_waiting_time = sum(vehicle_waiting.values())
+
 avg_wait = (
     total_waiting_time / len(vehicle_waiting)
     if len(vehicle_waiting) > 0 else 0
 )
 
-print(f"\n⏳ Average Waiting Time: {avg_wait:.2f}")
-
-# =========================================================
-#               AVERAGE TRAVEL TIME
-# =========================================================
+# Average Travel Time
 avg_travel = (
     total_travel_time / total_vehicles_passed
     if total_vehicles_passed > 0 else 0
 )
 
-print(f"⏱ Average Travel Time: {avg_travel:.2f}")
+# Fuel in Liters
+fuel_liters = fuel_consumption / 1000000
 
-# =========================================================
-#               FUEL CONSUMPTION
-# =========================================================
-print(f"\n⛽ Total Fuel Consumption: {fuel_consumption:.6f} ml")
-
-# =========================================================
-#               CO2 EMISSION
-# =========================================================
-total_co2 = sum(emission_history)
+# CO2 in KG
+total_co2 = sum(emission_history) / 1000000
 
 avg_co2 = (
     total_co2 / len(emission_history)
     if len(emission_history) > 0 else 0
 )
 
-print(f"\n🌿 Total CO2 Emission: {total_co2:.2f}")
-
-print(f"🌿 Average CO2 per Step: {avg_co2:.2f}")
-
-# =========================================================
-#               TRAFFIC THROUGHPUT
-# =========================================================
+# Throughput
 throughput = total_vehicles_passed / SIM_TIME
 
-print(f"\n🚗 Traffic Throughput: {throughput:.2f} vehicles/sec")
 
 # =========================================================
-#               LANE-WISE COUNT
+#                   CLEAN OUTPUT
 # =========================================================
-print("\n📍 Lane-wise Vehicle Count:")
 
-for lane, count in lane_pass_count.items():
+print("\n========== FIXED SIGNAL RESULTS ==========\n")
 
-    print(f"{lane} → {count}")
+print(f"Simulation Time           : {SIM_TIME} sec")
 
-print("\n============================================")
+print(f"Vehicles Passed           : {total_vehicles_passed}")
 
+print(f"Average Waiting Time      : {avg_wait:.2f} sec")
+
+print(f"Average Travel Time       : {avg_travel:.2f} sec")
+
+print(f"Fuel Consumption          : {fuel_liters:.3f} L")
+
+print(f"Total CO2 Emission        : {total_co2:.2f} kg")
+
+print(f"Average CO2 per Second    : {avg_co2:.2f} kg")
+
+print(f"Traffic Throughput        : {throughput:.2f} veh/sec")
+
+print("\n==========================================")
 # ================= CLOSE =================
 traci.close()

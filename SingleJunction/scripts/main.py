@@ -69,7 +69,9 @@ total_vehicles_passed = 0
 total_time_spent = 0
 vehicle_last_lane = {}
 vehicle_waiting = {}
+fuel_consumption = 0
 
+SIM_TIME = 1200
 # ================= HELPER FUNCTIONS =================
 def calculate_green_time(priority):
     priority = min(priority, 50)
@@ -88,7 +90,7 @@ def predict_traffic(lane, current_density):
 # ================= MAIN LOOP =================
 while traci.simulation.getMinExpectedNumber() > 0:
 
-    if traci.simulation.getTime() - start_time >= 300:
+    if traci.simulation.getTime() - start_time >= SIM_TIME :
         break
 
     traci.simulationStep()
@@ -117,6 +119,12 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
         # accumulated waiting time
         waiting = traci.vehicle.getAccumulatedWaitingTime(v)
+
+        # fuel consumption
+        try:
+            fuel_consumption += traci.vehicle.getFuelConsumption(v)
+        except:
+            pass
 
         vehicle_waiting[v] = max(
             vehicle_waiting.get(v, 0),
@@ -173,14 +181,51 @@ while traci.simulation.getMinExpectedNumber() > 0:
                 action, _ = model.predict(state, deterministic=True)
 
                 # ===== APPLY ACTION =====
+                phase_changed = False
                 if action == 1:
-                    model.current_phase = 2 if model.current_phase == 0 else 0
+                   new_phase = 2 if model.current_phase == 0 else 0
 
-                traci.trafficlight.setPhase(tl, model.current_phase)
+                   if new_phase != model.current_phase:
+
+                       model.current_phase = new_phase
+
+                       phase_changed = True
+
+                current_sumo_phase = traci.trafficlight.getPhase(tl)
+
+                if phase_changed and current_sumo_phase != model.current_phase:
+
+                    traci.trafficlight.setPhase(tl, model.current_phase)
+                    green_time = 10 + queue_length
+
+                    green_time = max(10, min(green_time, 60))
+
+                    traci.trafficlight.setPhaseDuration(tl, green_time)
+                    signal_state = traci.trafficlight.getRedYellowGreenState(tl)
+
+                    remaining_time = green_time
+                    # ===== ACTIVE DIRECTION =====
+                    if model.current_phase == 0:
+                        active_direction = "North-South"
+
+                    else:
+                        active_direction = "East-West"
+                        
+                    if remaining_time >= 22:
+                        print("\n==============================")
+                    
+                        print(f"🚦 Junction ID      : {tl}")
+
+                        print(f"🟢 Current Phase    : {model.current_phase}")
+                        
+                        print(f"Active Direction    : {active_direction}")
+                        print(f"🚥 Signal State     : {signal_state}")
+
+                        print(f"⏳ Green Time       : {remaining_time:.1f} sec")
+
+                        print("==============================")
 
                 model.last_action_time = current_time
-
-                print(f"🤖 RL Action: {action} | Phase: {model.current_phase}")
 
                 continue
 
@@ -267,29 +312,41 @@ while traci.simulation.getMinExpectedNumber() > 0:
 
         print(f"🚦 TL: {tl} | Priority: {best_score:.2f} | Time: {green_time:.2f}")
 
-    # ================= EXIT TRACK =================
-    current_vehicles = set(traci.vehicle.getIDList())
+   # ================= EXIT TRACK =================
 
-    for v in list(vehicle_entry_time.keys()):
-        if v not in current_vehicles and v not in vehicle_exit_time:
+    arrived_vehicles = traci.simulation.getArrivedIDList()
+
+    for v in arrived_vehicles:
+
+        if v not in vehicle_exit_time:
+
             exit_t = traci.simulation.getTime()
+
             vehicle_exit_time[v] = exit_t
 
-            travel_time = exit_t - vehicle_entry_time[v]
-            total_time_spent += travel_time
+            if v in vehicle_entry_time:
+
+                travel_time = exit_t - vehicle_entry_time[v]
+
+                total_time_spent += travel_time
+
             total_vehicles_passed += 1
 
             lane = vehicle_last_lane.get(v, "unknown")
-            lane_pass_count[lane] = lane_pass_count.get(lane, 0) + 1
+
+            lane_pass_count[lane] = (
+                lane_pass_count.get(lane, 0) + 1
+            )
 
 
-# ================= RESULT =================
-print("\n========== 🚦 SIMULATION RESULT ==========")
 
-print(f"Total Vehicles Passed: {total_vehicles_passed}")
-SIM_TIME = 300
+# =========================================================
+#                   FINAL RESULT
+# =========================================================
 
-# ================= WAITING TIME =================
+
+
+# Waiting Time
 total_wait = sum(vehicle_waiting.values())
 
 avg_wait = (
@@ -297,41 +354,50 @@ avg_wait = (
     if total_vehicles_passed > 0 else 0
 )
 
-print(f"\n⏳ Average Waiting Time: {avg_wait:.2f}")
+# Travel Time
+avg_time = (
+    total_time_spent / total_vehicles_passed
+    if total_vehicles_passed > 0 else 0
+)
 
-avg_time = (total_time_spent / total_vehicles_passed) if total_vehicles_passed > 0 else 0
+# Fuel in Liters
+fuel_liters = fuel_consumption / 1000000
 
-# 🌿 EMISSION RESULT
-total_co2 = sum(emission_history)
-avg_co2 = total_co2 / (len(emission_history) + 1e-6)
+# CO2 in KG
+total_co2 = sum(emission_history) / 1000000
 
-max_co2 = max(emission_history)
-min_co2 = min(emission_history)
+avg_co2 = (
+    total_co2 / len(emission_history)
+    if len(emission_history) > 0 else 0
+)
 
-print(f"🌿 Max CO2: {max_co2:.2f}")
-print(f"🌿 Min CO2: {min_co2:.2f}")
-
-print(f"\n🌿 Total CO2 Emission: {total_co2:.2f}")
-print(f"🌿 Average CO2 per Step: {avg_co2:.2f}")
-
-
-print("\n📍 Lane-wise Vehicle Count:")
-for lane, count in lane_pass_count.items():
-    print(f"{lane} → {count}")
-
-print(f"\n⏱ Total Time Spent: {total_time_spent:.2f}")
-print(f"⏱ Average Time per Vehicle: {avg_time:.2f}")
-# ================= FUEL CONSUMPTION =================
-fuel_consumption = avg_wait * 0.0002 * total_vehicles_passed
-
-print(f"\n⛽ Total Fuel Consumption: {fuel_consumption:.6f} ml")
-
-# ================= THROUGHPUT =================
+# Throughput
 throughput = total_vehicles_passed / SIM_TIME
 
-print(f"\n🚗 Traffic Throughput: {throughput:.2f} vehicles/sec")
 
+# =========================================================
+#                   CLEAN OUTPUT
+# =========================================================
 
-print("=========================================\n")
+print("\n========== ADAPTIVE SIGNAL RESULTS ==========\n")
+
+print(f"Simulation Time           : {SIM_TIME} sec")
+
+print(f"Vehicles Passed           : {total_vehicles_passed}")
+
+print(f"Average Waiting Time      : {avg_wait:.2f} sec")
+
+print(f"Average Travel Time       : {avg_time:.2f} sec")
+
+print(f"Fuel Consumption          : {fuel_liters:.3f} L")
+
+print(f"Total CO2 Emission        : {total_co2:.2f} kg")
+
+print(f"Average CO2 per Seconds   : {avg_co2:.4f} kg")
+
+print(f"Traffic Throughput        : {throughput:.2f} veh/sec")
+
+print("\n=============================================")
+
 
 traci.close()
