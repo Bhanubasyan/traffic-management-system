@@ -26,7 +26,7 @@ traci.start(sumoCmd)
 tls_ids = traci.trafficlight.getIDList()
 
 # ================= SIMULATION PARAMETERS =================
-SIM_TIME = 1200
+SIM_TIME = 120
 
 # ================= FIXED SIGNAL TIMING =================
 GREEN_TIME = 20

@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-05-15 01:59:30.970609 by Eclipse SUMO randomTrips.py v1_26_0+0000-fa7df22d7f1
+<configuration>
+    <net-file value="C:\Users\Bhanu\TCS\SingleJunction\network\city.net.xml"/>
+    <route-file value="C:\Users\Bhanu\TCS\SingleJunction\routes\routes.rou.xml"/>
+    <seed value="71010"/>
+    <end value="120.0"/>
+    <period value="1.0"/>
+    <binomial value="2"/>
+</configuration>
+-->
+
+<!-- generated on 2026-05-15T01:59:30.880693+05:30 by Eclipse SUMO duarouter 1.26.0
+<duarouterConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/duarouterConfiguration.xsd">
+
+    <input>
+        <net-file value="C:\Users\Bhanu\TCS\SingleJunction\network\city.net.xml"/>
+        <route-files value="trips.trips.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Users\Bhanu\TCS\SingleJunction\routes\routes.rou.xml"/>
+        <alternatives-output value="NUL"/>
+    </output>
+
+    <time>
+        <begin value="0"/>
+        <end value="120.0"/>
+    </time>
+
+    <report>
+        <no-warnings value="true"/>
+        <ignore-errors value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+</duarouterConfiguration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="car" vClass="passenger" color="0,102,204" maxSpeed="22.2" accel="2.5"/>
+    <vType id="bike" vClass="motorcycle" color="255,69,0" maxSpeed="25" accel="3.0"/>
+    <vType id="scooter" vClass="motorcycle" color="255,140,0" maxSpeed="19.4" accel="2.5"/>
+    <vType id="auto" vClass="taxi" color="255,215,0" maxSpeed="13.8" accel="2.0"/>
+    <vType id="jeep" vClass="passenger" color="34,139,34" maxSpeed="22.2"/>
+    <vType id="van" vClass="passenger" color="169,169,169" maxSpeed="19.4"/>
+    <vType id="public_van" vClass="passenger" color="0,255,255" maxSpeed="19.4"/>
+    <vType id="school_van" vClass="passenger" color="255,165,0" maxSpeed="16.6"/>
+    <vType id="school_bus" vClass="bus" color="255,223,0" maxSpeed="16.6"/>
+    <vType id="truck" vClass="truck" color="139,69,19" maxSpeed="16.6"/>
+    <vType id="oil_tanker" vClass="truck" color="0,0,0" maxSpeed="15"/>
+    <vType id="water_tanker" vClass="truck" color="30,144,255" maxSpeed="15"/>
+    <vType id="milk_tanker" vClass="truck" color="255,255,255" maxSpeed="15"/>
+    <vType id="ambulance" vClass="emergency" color="255,0,0" maxSpeed="27.7" accel="3.5"/>
+    <vehicle id="C0" depart="0.00" type="car">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="1" depart="1.00" type="bike">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="2" depart="3.00" type="bike">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="S3" depart="4.00" type="scooter">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="V4" depart="5.00" type="jeep">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="V5" depart="7.00" type="public_van">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="TK6" depart="9.00" type="water_tanker">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="S7" depart="10.00" type="scooter">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C8" depart="10.00" type="car">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="R9" depart="11.00" type="auto">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="R10" depart="11.00" type="auto">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="R11" depart="12.00" type="auto">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="R12" depart="13.00" type="auto">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C13" depart="15.00" type="car">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="14" depart="16.00" type="bike">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="S15" depart="17.00" type="scooter">
+        <route edges="-E2 E1"/>
+    </vehicle>
+    <vehicle id="S16" depart="18.00" type="scooter">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C17" depart="19.00" type="car">
+        <route edges="-E1 E2"/>
+    </vehicle>
+    <vehicle id="V18" depart="20.00" type="van">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="C19" depart="21.00" type="car">
+        <route edges="-E3 E2"/>
+    </vehicle>
+    <vehicle id="20" depart="22.00" type="bike">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="A21" depart="22.00" type="ambulance">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C22" depart="23.00" type="car">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="R23" depart="23.00" type="auto">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="24" depart="24.00" type="bike">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="R25" depart="25.00" type="auto">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="V26" depart="25.00" type="school_van">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="R27" depart="26.00" type="auto">
+        <route edges="-E2 E1"/>
+    </vehicle>
+    <vehicle id="B28" depart="28.00" type="school_bus">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="V29" depart="30.00" type="public_van">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="B30" depart="32.00" type="school_bus">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="S31" depart="32.00" type="scooter">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="32" depart="33.00" type="bike">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="R33" depart="34.00" type="auto">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="TK34" depart="35.00" type="water_tanker">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="S35" depart="38.00" type="scooter">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="V36" depart="40.00" type="public_van">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="S37" depart="40.00" type="scooter">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="38" depart="41.00" type="bike">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="V39" depart="41.00" type="jeep">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C40" depart="42.00" type="car">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="V41" depart="45.00" type="public_van">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="A42" depart="45.00" type="ambulance">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="43" depart="46.00" type="bike">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="V44" depart="46.00" type="van">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C45" depart="47.00" type="car">
+        <route edges="-E1 E2"/>
+    </vehicle>
+    <vehicle id="C46" depart="47.00" type="car">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="C47" depart="49.00" type="car">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="V48" depart="50.00" type="van">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="V49" depart="50.00" type="van">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="V50" depart="52.00" type="public_van">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="R51" depart="52.00" type="auto">
+        <route edges="-E2 E1"/>
+    </vehicle>
+    <vehicle id="R52" depart="53.00" type="auto">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="V53" depart="55.00" type="public_van">
+        <route edges="-E3 E2"/>
+    </vehicle>
+    <vehicle id="C54" depart="58.00" type="car">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="C55" depart="64.00" type="car">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="V56" depart="65.00" type="school_van">
+        <route edges="-E3 E2"/>
+    </vehicle>
+    <vehicle id="V57" depart="66.00" type="van">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="C58" depart="67.00" type="car">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="B59" depart="67.00" type="school_bus">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="60" depart="68.00" type="bike">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="C61" depart="69.00" type="car">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C62" depart="72.00" type="car">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="T63" depart="73.00" type="truck">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="V64" depart="73.00" type="jeep">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="R65" depart="74.00" type="auto">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="S66" depart="74.00" type="scooter">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="67" depart="76.00" type="bike">
+        <route edges="-E2 E1"/>
+    </vehicle>
+    <vehicle id="68" depart="76.00" type="bike">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C69" depart="77.00" type="car">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="C70" depart="77.00" type="car">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="A71" depart="79.00" type="ambulance">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="72" depart="79.00" type="bike">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="V73" depart="80.00" type="jeep">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="V74" depart="81.00" type="van">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="R75" depart="81.00" type="auto">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="V76" depart="82.00" type="van">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="S77" depart="84.00" type="scooter">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="R78" depart="84.00" type="auto">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="S79" depart="85.00" type="scooter">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C80" depart="87.00" type="car">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="81" depart="88.00" type="bike">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="S82" depart="88.00" type="scooter">
+        <route edges="-E1 E2"/>
+    </vehicle>
+    <vehicle id="R83" depart="90.00" type="auto">
+        <route edges="-E1 E2"/>
+    </vehicle>
+    <vehicle id="C84" depart="92.00" type="car">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C85" depart="94.00" type="car">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="V86" depart="95.00" type="van">
+        <route edges="-E2 E3"/>
+    </vehicle>
+    <vehicle id="C87" depart="96.00" type="car">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="88" depart="96.00" type="bike">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="C89" depart="97.00" type="car">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="C90" depart="99.00" type="car">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="V91" depart="100.00" type="jeep">
+        <route edges="-E0 E2"/>
+    </vehicle>
+    <vehicle id="V92" depart="100.00" type="jeep">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="93" depart="101.00" type="bike">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="C94" depart="103.00" type="car">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="S95" depart="104.00" type="scooter">
+        <route edges="-E1 E2"/>
+    </vehicle>
+    <vehicle id="C96" depart="104.00" type="car">
+        <route edges="-E0 E3"/>
+    </vehicle>
+    <vehicle id="97" depart="107.00" type="bike">
+        <route edges="-E3 E0"/>
+    </vehicle>
+    <vehicle id="98" depart="107.00" type="bike">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="99" depart="108.00" type="bike">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="TK100" depart="109.00" type="water_tanker">
+        <route edges="-E3 E1"/>
+    </vehicle>
+    <vehicle id="C101" depart="109.00" type="car">
+        <route edges="-E3 E2"/>
+    </vehicle>
+    <vehicle id="V102" depart="110.00" type="school_van">
+        <route edges="-E1 E0"/>
+    </vehicle>
+    <vehicle id="T103" depart="111.00" type="truck">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="TK104" depart="112.00" type="milk_tanker">
+        <route edges="-E1 E3"/>
+    </vehicle>
+    <vehicle id="C105" depart="115.00" type="car">
+        <route edges="-E3 E2"/>
+    </vehicle>
+    <vehicle id="C106" depart="116.00" type="car">
+        <route edges="-E0 E1"/>
+    </vehicle>
+    <vehicle id="R107" depart="118.00" type="auto">
+        <route edges="-E2 E0"/>
+    </vehicle>
+    <vehicle id="108" depart="118.00" type="bike">
+        <route edges="-E1 E0"/>
+    </vehicle>
+</routes>

@@ -2,9 +2,21 @@ import traci
 import os
 import numpy as np
 import sys
+import random
+import subprocess
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "rl")))
+from edit_routes import update_vehicle_types
 
 emission_history = []
+SIM_TIME = 120
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+RANDOM_TRIPS = r"C:/Program Files (x86)/Eclipse/Sumo/tools/randomTrips.py"
+NETWORK_FILE = os.path.join(BASE_DIR, "network", "city.net.xml")
+ROUTE_FILE = os.path.join(BASE_DIR, "routes", "routes.rou.xml")
+CONFIG_FILE = os.path.join(BASE_DIR, "config", "simulation.sumocfg")
+
+random_seed = random.randint(1, 100000)
 # ================= RL ENABLE =================
 USE_RL = True
 
@@ -31,7 +43,29 @@ if USE_RL:
 
 
 # ================= START SUMO =================
-sumoCmd = ["sumo-gui", "-c", "config/simulation.sumocfg"]
+# Generate a fresh random demand file for every run.  The binomial option makes
+# the number of generated vehicles vary, instead of only changing their routes.
+subprocess.run(
+    [
+        sys.executable,
+        RANDOM_TRIPS,
+        "-n", NETWORK_FILE,
+        "-r", ROUTE_FILE,
+        "-e", str(SIM_TIME),
+        "-p", "1",
+        "--binomial", "2",
+        "--seed", str(random_seed),
+    ],
+    check=True,
+)
+update_vehicle_types(ROUTE_FILE, seed=random_seed)
+
+sumoCmd = [
+    "sumo-gui",
+    "-c", CONFIG_FILE,
+    "--route-files", ROUTE_FILE,
+    "--seed", str(random_seed),
+]
 traci.start(sumoCmd)
 
 tls_ids = traci.trafficlight.getIDList()
@@ -71,7 +105,7 @@ vehicle_last_lane = {}
 vehicle_waiting = {}
 fuel_consumption = 0
 
-SIM_TIME = 1200
+
 # ================= HELPER FUNCTIONS =================
 def calculate_green_time(priority):
     priority = min(priority, 50)
@@ -88,10 +122,10 @@ def predict_traffic(lane, current_density):
 
 
 # ================= MAIN LOOP =================
-while traci.simulation.getMinExpectedNumber() > 0:
-
-    if traci.simulation.getTime() - start_time >= SIM_TIME :
-        break
+while (
+    traci.simulation.getMinExpectedNumber() > 0
+    and traci.simulation.getTime() <= SIM_TIME
+    ):
 
     traci.simulationStep()
 
@@ -372,7 +406,9 @@ avg_co2 = (
 )
 
 # Throughput
-throughput = total_vehicles_passed / SIM_TIME
+actual_time = traci.simulation.getTime()
+
+throughput = total_vehicles_passed / actual_time
 
 
 # =========================================================
