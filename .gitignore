@@ -2,9 +2,7 @@
 __pycache__/
 *.pyc
 
-# Model files
-*.zip
-*.pkl
+
 
 # Logs
 *.log
