@@ -32,7 +32,7 @@ def make_env():
 
 env = DummyVecEnv([make_env])
 
-# 🔥 VERY IMPORTANT: normalize observations + rewards
+#  VERY IMPORTANT: normalize observations + rewards
 env = VecNormalize(
     env,
     norm_obs=True,
@@ -48,12 +48,12 @@ if os.path.exists(model_path):
     print("✅ Loading previous model ")
     model = PPO.load(model_path, env=env)
 
-    # 🔥 FORCE NEW LEARNING RATE
+    #  FORCE NEW LEARNING RATE
     model.learning_rate = 0.0005
     model.lr_schedule = lambda _: 0.0005
 
 else:
-    print("⚠️ No previous model found, starting fresh")
+    print(" No previous model found, starting fresh")
     model = PPO(
         "MlpPolicy",
         env,
@@ -72,7 +72,7 @@ else:
 # ================= TRAIN =================
 callback = SaveCallback(save_path="../models")
 
-print("🚀 Training starting... (50k steps recommended)")
+print("Training starting... (50k steps recommended)")
 model.learn(total_timesteps=50000, callback=callback , reset_num_timesteps=False
 )
 
@@ -84,5 +84,5 @@ model.save("../models/final_ppo_model")
 env.save("../models/vec_normalize.pkl")   #  IMPORTANT
 
 
-print("✅ Training Finished")
+print(" Training Finished")
 env.close()

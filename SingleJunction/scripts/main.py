@@ -4,7 +4,11 @@ import numpy as np
 import sys
 import random
 import subprocess
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "rl")))
+BASE_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")
+)
+
+sys.path.append(BASE_DIR)
 from edit_routes import update_vehicle_types
 
 emission_history = []
@@ -23,17 +27,17 @@ USE_RL = True
 if USE_RL:
     from stable_baselines3 import PPO
     from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-    from traffic_env import TrafficEnv
+    from rl.basic.traffic_env import TrafficEnv
 
     try:
         # ===== LOAD ENV + NORMALIZATION =====
         env = DummyVecEnv([lambda: TrafficEnv()])
-        env = VecNormalize.load("models/vec_normalize.pkl", env)
+        env = VecNormalize.load("models/ppo_basic/vec_normalize.pkl", env)
         env.training = False
         env.norm_reward = False
 
         # ===== LOAD MODEL =====
-        model = PPO.load("models/ppo_22000", env=env)
+        model = PPO.load("models/ppo_basic/ppo_22000", env=env)
 
         print("✅ RL Model Loaded Successfully")
 

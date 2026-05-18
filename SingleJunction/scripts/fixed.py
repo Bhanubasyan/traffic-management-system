@@ -7,13 +7,13 @@ import random
 # Platform  : SUMO + TraCI
 # Type      : Fixed Traffic Signal System
 # Features  :
-#   ✅ Fixed cyclic signal control
-#   ✅ Vehicle waiting time
-#   ✅ Travel time calculation
-#   ✅ Fuel consumption estimation
-#   ✅ CO2 emission monitoring
-#   ✅ Traffic throughput
-#   ✅ Lane-wise vehicle count
+#    Fixed cyclic signal control
+#    Vehicle waiting time
+#    Travel time calculation
+#    Fuel consumption estimation
+#    CO2 emission monitoring
+#    Traffic throughput
+#    Lane-wise vehicle count
 # =========================================================
 
 
