@@ -1,13 +1,27 @@
+import os
+import sys
+import random
+import csv
+
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from traffic_env import TrafficEnv
 import traci
 import numpy as np
-import csv
-import random
 
-# ================= SETTINGS =================
-MODEL_PATH = "../models/ppo_22000_old"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
+sys.path.insert(0, os.path.dirname(BASE_DIR))
+from traffic_env import TrafficEnv
+
+MODEL_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "models", "ppo_basic"))
+MODEL_PATH = os.path.join(MODEL_DIR, "ppo_22000.zip")
+VEC_PATH = os.path.join(MODEL_DIR, "vec_normalize.pkl")
+
+if not os.path.exists(MODEL_PATH):
+    alt_path = os.path.join(MODEL_DIR, "ppo_22000_old.zip")
+    if os.path.exists(alt_path):
+        MODEL_PATH = alt_path
+
 USE_MAIN_LOGIC = True
 
 # ================= FUNCTION WRAPPER =================
@@ -21,7 +35,7 @@ def run_simulation(run_id, sim_time, scenario):   # 🔥 added sim_time + scenar
 
     # ================= ENV =================
     env = DummyVecEnv([lambda: TrafficEnv()])
-    env = VecNormalize.load("../models/vec_normalize.pkl", env)
+    env = VecNormalize.load(VEC_PATH, env)
 
     env.training = False
     env.norm_reward = False

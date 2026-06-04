@@ -1,0 +1,3 @@
+Run,Seed,System,SimulationTime,WaitingTime,TravelTime,Throughput,VehiclesPassed,FuelConsumption,CO2Emission,AvgQueue,AvgSpeedKmph,FairnessIndex,PassedCars,PassedBikes,PassedTrucks,PassedBuses,PassedMotorcycles,PassedRickshaws,PassedEmergencyVehicles,PassedOtherVehicles,Weather,ZoneType,RoadCapacity
+1,2026,Fixed,1200,179.09,37.88,0.404,485,14.0081,43.3237,8.72,5.8,0.598,203,93,41,26,40,60,22,0,,,
+2,2026,Adaptive Context PPO,1200,20.2,32.91,0.495,594,15.124,46.7847,3.92,6.83,0.433,239,113,47,35,51,75,34,0,Rain,Industrial,0.707

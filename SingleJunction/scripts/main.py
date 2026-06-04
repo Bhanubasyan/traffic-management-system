@@ -4,15 +4,49 @@ import numpy as np
 import sys
 import random
 import subprocess
+import csv
+
 BASE_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")
 )
 
-sys.path.append(BASE_DIR)
+sys.path.insert(0, BASE_DIR)
 from edit_routes import update_vehicle_types
 
+SUMO_HOME = os.environ.get("SUMO_HOME")
+if SUMO_HOME:
+    RANDOM_TRIPS = os.path.join(SUMO_HOME, "tools", "randomTrips.py")
+else:
+    RANDOM_TRIPS = r"C:/Program Files (x86)/Eclipse/Sumo/tools/randomTrips.py"
+
+if not os.path.exists(RANDOM_TRIPS):
+    print(f"⚠️  WARNING: randomTrips.py not found at {RANDOM_TRIPS}. Please set SUMO_HOME.")
+
 emission_history = []
-SIM_TIME = 120
+SIM_TIME = 600
+
+# ================= CSV SETUP =================
+
+csv_file = "rl_results.csv"
+
+try:
+    with open(csv_file, "x", newline="") as f:
+
+        writer = csv.writer(f)
+
+        writer.writerow([
+            "Run",
+            "System",
+            "WaitingTime",
+            "TravelTime",
+            "Throughput",
+            "VehiclesPassed",
+            "FuelConsumption",
+            "CO2Emission"
+        ])
+
+except FileExistsError:
+    pass
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 RANDOM_TRIPS = r"C:/Program Files (x86)/Eclipse/Sumo/tools/randomTrips.py"
@@ -32,12 +66,12 @@ if USE_RL:
     try:
         # ===== LOAD ENV + NORMALIZATION =====
         env = DummyVecEnv([lambda: TrafficEnv()])
-        env = VecNormalize.load("models/ppo_basic/vec_normalize.pkl", env)
+        env = VecNormalize.load(os.path.join(BASE_DIR, "models", "ppo_basic", "vec_normalize.pkl"), env)
         env.training = False
         env.norm_reward = False
 
         # ===== LOAD MODEL =====
-        model = PPO.load("models/ppo_basic/ppo_22000", env=env)
+        model = PPO.load(os.path.join(BASE_DIR, "models", "ppo_basic", "ppo_22000"), env=env)
 
         print("✅ RL Model Loaded Successfully")
 
@@ -439,5 +473,26 @@ print(f"Traffic Throughput        : {throughput:.2f} veh/sec")
 
 print("\n=============================================")
 
+
+# ================= SAVE RESULTS =================
+
+run_id = random.randint(1000, 9999)
+
+with open(csv_file, "a", newline="") as f:
+
+    writer = csv.writer(f)
+
+    writer.writerow([
+        run_id,
+        "RL",
+        round(avg_wait, 2),
+        round(avg_time, 2),
+        round(throughput, 2),
+        total_vehicles_passed,
+        round(fuel_liters, 3),
+        round(total_co2, 3)
+    ])
+
+print("✅ Results saved to rl_results.csv")
 
 traci.close()

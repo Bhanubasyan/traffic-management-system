@@ -1,6 +1,7 @@
 import traci
 import os
 import random
+import csv
 # =========================================================
 #               FIXED TRAFFIC CONTROL MODEL
 # =========================================================
@@ -26,7 +27,7 @@ traci.start(sumoCmd)
 tls_ids = traci.trafficlight.getIDList()
 
 # ================= SIMULATION PARAMETERS =================
-SIM_TIME = 120
+SIM_TIME = 600
 
 # ================= FIXED SIGNAL TIMING =================
 GREEN_TIME = 20
@@ -70,6 +71,27 @@ fuel_consumption = 0
 
 emission_history = []
 
+# ================= CSV SETUP =================
+
+csv_file = "fixed_results.csv"
+
+try:
+    with open(csv_file, "x", newline="") as f:
+        writer = csv.writer(f)
+
+        writer.writerow([
+            "Run",
+            "System",
+            "WaitingTime",
+            "TravelTime",
+            "Throughput",
+            "VehiclesPassed",
+            "FuelConsumption",
+            "CO2Emission"
+        ])
+
+except FileExistsError:
+    pass
 # ================= PHASE TRACKING =================
 current_phase_index = {}
 
@@ -321,5 +343,27 @@ print(f"Average CO2 per Second    : {avg_co2:.2f} kg")
 print(f"Traffic Throughput        : {throughput:.2f} veh/sec")
 
 print("\n==========================================")
+
+
+# ================= SAVE RESULTS =================
+
+run_id = random.randint(1000, 9999)
+
+with open(csv_file, "a", newline="") as f:
+
+    writer = csv.writer(f)
+
+    writer.writerow([
+        run_id,
+        "Fixed",
+        round(avg_wait, 2),
+        round(avg_travel, 2),
+        round(throughput, 2),
+        total_vehicles_passed,
+        round(fuel_liters, 3),
+        round(total_co2, 3)
+    ])
+
+print("✅ Results saved to fixed_results.csv")
 # ================= CLOSE =================
 traci.close()

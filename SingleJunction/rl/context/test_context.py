@@ -1,12 +1,16 @@
+import os
+import sys
+import random
+
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from traffic_env_context import TrafficEnv
 
 import traci
 import numpy as np
 import csv
-import random
-import os
 
 
 # ======================================================
@@ -27,8 +31,13 @@ MODEL_DIR = os.path.join(
 
 MODEL_PATH = os.path.join(
     MODEL_DIR,
-    "ppo_10000.zip"
+    "ppo_151000.zip"
 )
+
+if not os.path.exists(MODEL_PATH):
+    alt_path = os.path.join(MODEL_DIR, "final_context_ppo.zip")
+    if os.path.exists(alt_path):
+        MODEL_PATH = alt_path
 
 VEC_PATH = os.path.join(
     MODEL_DIR,
@@ -81,9 +90,11 @@ def run_simulation(run_id, sim_time, scenario):
 
     env.envs[0].sumo_cmd[0] = "sumo-gui"
 
+    seed = np.random.randint(1, 10000)
+
     env.envs[0].sumo_cmd += [
         "--seed",
-        str(np.random.randint(1, 10000))
+        str(seed)
     ]
 
     # ======================================================
@@ -404,6 +415,8 @@ def run_simulation(run_id, sim_time, scenario):
 
         "Run_ID": run_id,
 
+        "Seed": seed,
+
         "Scenario": scenario,
 
         "Simulation_Time_sec": sim_time,
@@ -427,6 +440,12 @@ def run_simulation(run_id, sim_time, scenario):
         "Avg_Speed_kmh": avg_speed,
 
         "Fairness_Index": fairness,
+
+        "Weather": weather_map[env.envs[0].weather],
+
+        "Zone_Type": zone_map[env.envs[0].zone_type],
+
+        "Road_Capacity": env.envs[0].road_capacity,
 
         "Throughput_vehicles_per_sec": throughput
     }
@@ -474,7 +493,14 @@ if __name__ == "__main__":
 
     keys = all_results[0].keys()
 
-    with open("context_results.csv", "w", newline="") as f:
+    from datetime import datetime
+
+    csv_name = (
+        f"context_results_"
+        f"{datetime.now():%Y%m%d_%H%M%S}.csv"
+    )
+
+    with open(csv_name, "w", newline="") as f:
 
         writer = csv.DictWriter(
             f,
@@ -485,4 +511,4 @@ if __name__ == "__main__":
 
         writer.writerows(all_results)
 
-    print("\n✅ All runs completed & saved to context_results.csv")
+    print(f"\n✅ All runs completed & saved to {csv_name}")
