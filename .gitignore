@@ -17,3 +17,47 @@ log.txt
 # OS files
 .DS_Store
 Thumbs.db
+
+# Sensitive / large files and common virtualenvs
+.venv/
+venv/
+ENV/
+
+# Model checkpoints / binary weights
+models/*.pt
+models/*.pth
+models/*.pth.tar
+models/*.zip
+*.ckpt
+*.h5
+
+# Outputs, results and large artifacts
+outputs/
+outputs/results/
+outputs/graphs/
+
+# Secrets and keys
+.env
+.env.*
+secrets.*
+credentials.*
+*.key
+*.pem
+*.p12
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs
+.idea/
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
