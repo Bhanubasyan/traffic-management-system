@@ -61,3 +61,18 @@ pip-wheel-metadata/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# SingleJunction: ignore sensitive and large artifacts
+SingleJunction/.env
+SingleJunction/env/
+SingleJunction/models/
+SingleJunction/models/*
+SingleJunction/outputs/
+SingleJunction/outputs/*
+SingleJunction/rl_results.csv
+SingleJunction/rl_results_*.csv
+SingleJunction/fixed_results.csv
+SingleJunction/fixed_results_*.csv
+SingleJunction/*.zip
+SingleJunction/*.pt
+SingleJunction/*.pth
