@@ -1,0 +1,2 @@
+Run_ID,Seed,Scenario,Simulation_Time_sec,Vehicles_Passed,Avg_Travel_Time_sec,Avg_Waiting_Time_sec_per_vehicle,Avg_Queue_Length_vehicles,Total_CO2_kg,Avg_CO2_kg,Total_Fuel_L,Avg_Fuel_L,Avg_Speed_kmh,Fairness_Index,Weather,Zone_Type,Road_Capacity,Throughput_vehicles_per_sec
+1,7936,Low,10,0,0.0,600000.0,1.2,0.13269567333466967,0.013269566006510367,0.04301391220757676,0.004301390790618598,10.056405008497286,0.5000004166663193,Fog,School,0.7228107382080513,0.0

@@ -5,6 +5,20 @@ import numpy as np
 import os
 
 
+OBSERVATION_SIZE = 15
+HEAVY_VEHICLE_KEYWORDS = (
+    "bus",
+    "truck",
+    "lorry",
+    "tanker",
+    "van",
+)
+EMERGENCY_VEHICLE_KEYWORDS = (
+    "ambulance",
+    "emergency",
+)
+
+
 class TrafficEnv(gym.Env):
     def __init__(self):
         super().__init__()
@@ -36,7 +50,7 @@ class TrafficEnv(gym.Env):
         self.observation_space = spaces.Box(
             low=0.0,
             high=1.0,
-            shape=(10,),
+            shape=(OBSERVATION_SIZE,),
             dtype=np.float32
         )
 
@@ -60,6 +74,7 @@ class TrafficEnv(gym.Env):
         # 0 = Clear
         # 1 = Rain
         # 2 = Fog
+        # 3 = Heavy rain
         self.weather = 0
 
         # Zone Types:
@@ -84,7 +99,7 @@ class TrafficEnv(gym.Env):
         # RANDOM CONTEXT GENERATION
         # =========================
 
-        self.weather = np.random.choice([0, 1, 2])
+        self.weather = np.random.choice([0, 1, 2, 3])
 
         self.zone_type = np.random.choice([0, 1, 2, 3])
 
@@ -102,7 +117,7 @@ class TrafficEnv(gym.Env):
         tls_ids = traci.trafficlight.getIDList()
 
         if len(tls_ids) == 0:
-            return np.zeros(10, dtype=np.float32), 0, True, False, {}
+            return np.zeros(OBSERVATION_SIZE, dtype=np.float32), 0, True, False, {}
 
         tls_id = tls_ids[0]
 
@@ -124,12 +139,15 @@ class TrafficEnv(gym.Env):
 
         queue_length = self._get_queue_length()
 
-        # Rain + high traffic + commercial zone
-        # extend green longer
+        traffic_context = self._get_traffic_context()
+
+        # Bad weather, heavy vehicles, emergency vehicles, and highly unbalanced
+        # queues all need more stable green windows.
         if (
-            self.weather == 1 and
-            self.zone_type == 1 and
-            queue_length > 10
+            (self.weather in (1, 3) and self.zone_type == 1 and queue_length > 10) or
+            traffic_context["heavy_vehicle_ratio"] > 0.35 or
+            traffic_context["emergency_vehicle_present"] > 0 or
+            traffic_context["queue_imbalance"] > 0.5
         ):
             self.max_green = 25
 
@@ -174,6 +192,8 @@ class TrafficEnv(gym.Env):
             traci.lane.getWaitingTime(l)
             for l in traci.lane.getIDList()
         ]
+
+        traffic_context = self._get_traffic_context()
 
         # =========================
         # REWARD FUNCTION
@@ -222,6 +242,21 @@ class TrafficEnv(gym.Env):
 
         reward -= 0.2 * stopped
 
+        # Rich context rewards
+        reward -= 8 * traffic_context["queue_imbalance"]
+        reward -= 0.03 * traffic_context["max_lane_wait"]
+
+        if traffic_context["is_peak_hour"] > 0:
+            reward += 0.2 * moving
+
+        if traffic_context["heavy_vehicle_ratio"] > 0.25:
+            reward -= 0.5 * stopped
+
+        if traffic_context["emergency_vehicle_present"] > 0:
+            reward -= 0.1 * traffic_context["emergency_waiting_time"]
+            if action == 1:
+                reward -= 1
+
         # Delay reduction reward
         reward += (self.prev_wait - current_wait)
 
@@ -249,7 +284,7 @@ class TrafficEnv(gym.Env):
         tls_ids = traci.trafficlight.getIDList()
 
         if len(tls_ids) == 0:
-            return np.zeros(10, dtype=np.float32)
+            return np.zeros(OBSERVATION_SIZE, dtype=np.float32)
 
         tls_id = tls_ids[0]
 
@@ -294,20 +329,78 @@ class TrafficEnv(gym.Env):
         # FINAL STATE VECTOR
         # =========================
 
+        traffic_context = self._get_traffic_context()
+
         state = np.array([
             waiting,
             queue,
             vehicles,
             phase,
-            self.weather / 2.0,
+            traffic_context["weather_severity"],
             hour_sin,
             hour_cos,
             self.zone_type / 3.0,
             self.road_capacity,
-            arrival_rate
+            arrival_rate,
+            traffic_context["heavy_vehicle_ratio"],
+            traffic_context["emergency_vehicle_present"],
+            traffic_context["queue_imbalance"],
+            traffic_context["max_lane_wait"],
+            traffic_context["is_peak_hour"],
         ], dtype=np.float32)
 
         return state
+
+    def _get_traffic_context(self):
+        lanes = traci.lane.getIDList()
+        vehicles = traci.vehicle.getIDList()
+
+        heavy_count = 0
+        emergency_count = 0
+        emergency_waiting_time = 0.0
+
+        for vehicle_id in vehicles:
+            try:
+                type_id = traci.vehicle.getTypeID(vehicle_id).lower()
+            except traci.TraCIException:
+                type_id = ""
+
+            if any(keyword in type_id for keyword in HEAVY_VEHICLE_KEYWORDS):
+                heavy_count += 1
+
+            if any(keyword in type_id for keyword in EMERGENCY_VEHICLE_KEYWORDS):
+                emergency_count += 1
+                try:
+                    emergency_waiting_time += traci.vehicle.getWaitingTime(vehicle_id)
+                except traci.TraCIException:
+                    pass
+
+        lane_queues = [
+            traci.lane.getLastStepHaltingNumber(lane)
+            for lane in lanes
+        ]
+        lane_waits = [
+            traci.lane.getWaitingTime(lane)
+            for lane in lanes
+        ]
+
+        max_queue = max(lane_queues) if lane_queues else 0
+        min_queue = min(lane_queues) if lane_queues else 0
+        max_lane_wait = max(lane_waits) if lane_waits else 0
+
+        sim_time = traci.simulation.getTime()
+        hour = (sim_time / 3600.0) % 24
+        is_peak_hour = 1.0 if 7 <= hour <= 10 or 17 <= hour <= 20 else 0.0
+
+        return {
+            "weather_severity": self.weather / 3.0,
+            "heavy_vehicle_ratio": min(heavy_count / max(len(vehicles), 1), 1.0),
+            "emergency_vehicle_present": 1.0 if emergency_count > 0 else 0.0,
+            "emergency_waiting_time": min(emergency_waiting_time / 300.0, 1.0),
+            "queue_imbalance": min((max_queue - min_queue) / 50.0, 1.0),
+            "max_lane_wait": min(max_lane_wait / 300.0, 1.0),
+            "is_peak_hour": is_peak_hour,
+        }
 
     def _get_waiting_time(self):
         return sum(

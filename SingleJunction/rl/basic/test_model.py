@@ -2,6 +2,7 @@ import os
 import sys
 import random
 import csv
+import argparse
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
@@ -157,23 +158,35 @@ def run_simulation(run_id, sim_time, scenario):   # 🔥 added sim_time + scenar
 # ================= MULTI RUN =================
 if __name__ == "__main__":
 
-    NUM_RUNS = 3
-    SIM_TIMES = [60, 120, 300]
+    parser = argparse.ArgumentParser(description="Run a single traffic scenario simulation")
+    parser.add_argument(
+        "--scenario",
+        choices=["Low", "Medium", "High"],
+        default="Low",
+        help="Traffic scenario to run"
+    )
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=3,
+        help="Number of runs per simulation time"
+    )
+    args = parser.parse_args()
 
-    # 🔥 you manually control traffic → just label it
-    SCENARIOS = ["Low", "Medium", "High"]  
+    NUM_RUNS = args.runs
+    SIM_TIMES = [60, 120, 300]
+    scenario = args.scenario
 
     all_results = []
     run_id = 1
 
-    for scenario in SCENARIOS:
-        for sim_time in SIM_TIMES:
-            for _ in range(NUM_RUNS):
+    for sim_time in SIM_TIMES:
+        for _ in range(NUM_RUNS):
 
-                result = run_simulation(run_id, sim_time, scenario)
-                all_results.append(result)
+            result = run_simulation(run_id, sim_time, scenario)
+            all_results.append(result)
 
-                run_id += 1
+            run_id += 1
 
     # ===== SAVE =====
     keys = all_results[0].keys()

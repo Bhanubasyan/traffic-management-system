@@ -1,0 +1,2 @@
+Run_ID,Model,Simulation_Time_sec,Vehicles_Passed,Evaluation_Reward,Throughput_vehicles_per_sec,Avg_Waiting_Time_sec_per_vehicle,Avg_Travel_Time_sec,Avg_Queue_Length_vehicles,Avg_Speed_kmh,Fairness_Index,Total_CO2_kg,Avg_CO2_kg_per_step,Total_Fuel_L,Avg_Fuel_L_per_step
+1,Fixed-time (30s),2500.0,442,-194.13180000000003,0.1768,20.006787330316744,80.13574660633485,23.05,23.07287148270567,0.510134922530861,89.59944386827817,0.17919888773655634,29.047003069975542,0.05809400613995108

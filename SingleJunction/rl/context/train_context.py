@@ -9,9 +9,13 @@ import os
 # PATH SETUP
 # ======================================================
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROJECT_DIR = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
 
-MODEL_DIR = os.path.join(BASE_DIR, "models", "ppo_context")
+MODEL_DIR = os.path.join(PROJECT_DIR, "models", "ppo_context_rich")
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 
@@ -78,7 +82,7 @@ model_path = os.path.join(
 # ================= LOAD / CREATE MODEL =================
 if os.path.exists(model_path):
 
-    print("✅ Loading previous Context PPO model")
+    print("Loading previous rich Context PPO model")
 
     model = PPO.load(
         model_path,
@@ -91,7 +95,7 @@ if os.path.exists(model_path):
 
 else:
 
-    print("🚀 No previous model found, starting fresh")
+    print("No previous rich context model found, starting fresh")
 
     model = PPO(
         "MlpPolicy",
@@ -113,7 +117,7 @@ else:
 
 callback = SaveCallback(save_path=MODEL_DIR)
 
-print("🚦 Training starting... (50k steps recommended)")
+print("Rich context training starting... (50k steps recommended)")
 
 model.learn(
     total_timesteps=50000,
@@ -127,7 +131,7 @@ model.learn(
 model.save(
     os.path.join(
         MODEL_DIR,
-        "final_context_ppo"
+        "final_context_rich_ppo"
     )
 )
 
@@ -138,6 +142,6 @@ env.save(
     )
 )
 
-print("✅ Context PPO Training Finished")
+print("Rich Context PPO Training Finished")
 
 env.close()

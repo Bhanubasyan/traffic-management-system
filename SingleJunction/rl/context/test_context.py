@@ -2,6 +2,7 @@ import os
 import sys
 import random
 
+from gymnasium import spaces
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
@@ -11,6 +12,7 @@ from traffic_env_context import TrafficEnv
 import traci
 import numpy as np
 import csv
+import argparse
 
 
 # ======================================================
@@ -52,7 +54,8 @@ VEC_PATH = os.path.join(
 weather_map = {
     0: "Clear",
     1: "Rain",
-    2: "Fog"
+    2: "Fog",
+    3: "Heavy Rain"
 }
 
 zone_map = {
@@ -62,6 +65,143 @@ zone_map = {
     3: "School"
 }
 
+RESULTS_DIR = os.path.join(BASE_DIR, "outputs", "results")
+
+HEAVY_VEHICLE_KEYWORDS = (
+    "bus",
+    "truck",
+    "lorry",
+    "tanker",
+    "van",
+)
+EMERGENCY_VEHICLE_KEYWORDS = (
+    "ambulance",
+    "emergency",
+)
+
+
+def print_run_header(run_id, sim_time, scenario):
+    print()
+    print("=" * 72)
+    print(f"RUN {run_id} | Scenario: {scenario} | Duration: {sim_time}s")
+    print(f"Model: {os.path.basename(MODEL_PATH)}")
+    print("=" * 72)
+
+
+def print_metric_table(title, rows):
+    print()
+    print(title)
+    print("-" * 72)
+    for label, value, unit in rows:
+        suffix = f" {unit}" if unit else ""
+        print(f"{label:<32} {value:>14}{suffix}")
+
+
+def print_run_result(result):
+    print_metric_table(
+        "Traffic Performance",
+        [
+            ("Vehicles passed", result["Vehicles_Passed"], "vehicles"),
+            ("Throughput", f"{result['Throughput_vehicles_per_sec']:.3f}", "veh/sec"),
+            ("Avg waiting time", f"{result['Avg_Waiting_Time_sec_per_vehicle']:.2f}", "sec/vehicle"),
+            ("Avg travel time", f"{result['Avg_Travel_Time_sec']:.2f}", "sec"),
+            ("Avg queue length", f"{result['Avg_Queue_Length_vehicles']:.2f}", "vehicles"),
+            ("Avg speed", f"{result['Avg_Speed_kmh']:.2f}", "km/h"),
+            ("Fairness index", f"{result['Fairness_Index']:.3f}", "score"),
+        ],
+    )
+
+    print_metric_table(
+        "Environment Impact",
+        [
+            ("Total CO2", f"{result['Total_CO2_kg']:.3f}", "kg"),
+            ("Avg CO2", f"{result['Avg_CO2_kg']:.4f}", "kg/step"),
+            ("Total fuel", f"{result['Total_Fuel_L']:.3f}", "L"),
+            ("Avg fuel", f"{result['Avg_Fuel_L']:.4f}", "L/step"),
+        ],
+    )
+
+    print_metric_table(
+        "Context",
+        [
+            ("Weather", result["Weather"], ""),
+            ("Zone type", result["Zone_Type"], ""),
+            ("Road capacity", f"{result['Road_Capacity']:.2f}", "normalized"),
+            ("Seed", result["Seed"], ""),
+        ],
+    )
+
+
+def print_final_summary(results):
+    if not results:
+        return
+
+    print()
+    print("=" * 112)
+    print("FINAL RUN SUMMARY")
+    print("=" * 112)
+    print(
+        f"{'Run':>3}  {'Scenario':<8} {'Time':>5} {'Veh':>5} "
+        f"{'Wait':>8} {'Travel':>8} {'Queue':>8} {'Speed':>8} "
+        f"{'TPut':>7} {'Weather':<11} {'Zone':<12}"
+    )
+    print("-" * 112)
+
+    for result in results:
+        print(
+            f"{result['Run_ID']:>3}  "
+            f"{result['Scenario']:<8} "
+            f"{result['Simulation_Time_sec']:>5} "
+            f"{result['Vehicles_Passed']:>5} "
+            f"{result['Avg_Waiting_Time_sec_per_vehicle']:>8.2f} "
+            f"{result['Avg_Travel_Time_sec']:>8.2f} "
+            f"{result['Avg_Queue_Length_vehicles']:>8.2f} "
+            f"{result['Avg_Speed_kmh']:>8.2f} "
+            f"{result['Throughput_vehicles_per_sec']:>7.3f} "
+            f"{result['Weather']:<11} "
+            f"{result['Zone_Type']:<12}"
+        )
+
+    avg_wait = float(np.mean([r["Avg_Waiting_Time_sec_per_vehicle"] for r in results]))
+    avg_throughput = float(np.mean([r["Throughput_vehicles_per_sec"] for r in results]))
+    total_vehicles = sum(r["Vehicles_Passed"] for r in results)
+
+    print("-" * 112)
+    print(f"Total vehicles: {total_vehicles} | Avg wait: {avg_wait:.2f} sec/vehicle | Avg throughput: {avg_throughput:.3f} veh/sec")
+
+
+class TrafficEnv10(TrafficEnv):
+    def __init__(self):
+        super().__init__()
+        self.observation_space = spaces.Box(
+            low=0.0,
+            high=1.0,
+            shape=(10,),
+            dtype=np.float32
+        )
+
+    def _get_state(self):
+        full_state = super()._get_state()
+        return full_state[:10]
+
+
+def get_context_state(env, waiting_time, queue_length, vehicle_count, current_phase):
+    sim_time_now = traci.simulation.getTime()
+    hour = (sim_time_now / 3600.0) % 24
+
+    return np.array([
+        waiting_time / 1000.0,
+        queue_length / 50.0,
+        vehicle_count / 100.0,
+        current_phase / 4.0,
+        env.envs[0].weather / 3.0,
+        (np.sin(2 * np.pi * hour / 24) + 1) / 2,
+        (np.cos(2 * np.pi * hour / 24) + 1) / 2,
+        env.envs[0].zone_type / 3.0,
+        env.envs[0].road_capacity,
+        min(traci.simulation.getDepartedNumber() / 10.0, 1.0),
+    ], dtype=np.float32)
+
 
 # ======================================================
 # RUN SIMULATION
@@ -69,7 +209,7 @@ zone_map = {
 
 def run_simulation(run_id, sim_time, scenario):
 
-    print(f"\n🚀 Run {run_id} | Scenario: {scenario} | Time: {sim_time}s\n")
+    print_run_header(run_id, sim_time, scenario)
 
     np.random.seed()
     random.seed()
@@ -78,7 +218,7 @@ def run_simulation(run_id, sim_time, scenario):
     # ENV
     # ======================================================
 
-    env = DummyVecEnv([lambda: TrafficEnv()])
+    env = DummyVecEnv([lambda: TrafficEnv10()])
 
     env = VecNormalize.load(
         VEC_PATH,
@@ -88,7 +228,7 @@ def run_simulation(run_id, sim_time, scenario):
     env.training = False
     env.norm_reward = False
 
-    env.envs[0].sumo_cmd[0] = "sumo-gui"
+    env.envs[0].sumo_cmd[0] = "sumo"
 
     seed = np.random.randint(1, 10000)
 
@@ -101,7 +241,7 @@ def run_simulation(run_id, sim_time, scenario):
     # LOAD MODEL
     # ======================================================
 
-    print("✅ Loading Context PPO model")
+    print("Loading rich Context PPO model...")
 
     model = PPO.load(
         MODEL_PATH,
@@ -236,53 +376,13 @@ def run_simulation(run_id, sim_time, scenario):
 
             current_phase = traci.trafficlight.getPhase(tl)
 
-            weather = env.envs[0].weather / 2.0
-
-            zone_type = env.envs[0].zone_type / 3.0
-
-            road_capacity = env.envs[0].road_capacity
-
-            arrival_rate = (
-                traci.simulation.getDepartedNumber() / 5.0
+            state = get_context_state(
+                env,
+                waiting_time,
+                queue_length,
+                vehicle_count,
+                current_phase
             )
-
-            arrival_rate = min(arrival_rate, 1.0)
-
-            sim_time_now = traci.simulation.getTime()
-
-            hour = (sim_time_now / 3600.0) % 24
-
-            hour_sin = (
-                np.sin(2 * np.pi * hour / 24) + 1
-            ) / 2
-
-            hour_cos = (
-                np.cos(2 * np.pi * hour / 24) + 1
-            ) / 2
-
-            state = np.array([
-
-                waiting_time / 1000.0,
-
-                queue_length / 50.0,
-
-                vehicle_count / 100.0,
-
-                current_phase / 4.0,
-
-                weather,
-
-                hour_sin,
-
-                hour_cos,
-
-                zone_type,
-
-                road_capacity,
-
-                arrival_rate
-
-            ], dtype=np.float32)
 
             state = env.normalize_obs(state)
 
@@ -348,23 +448,53 @@ def run_simulation(run_id, sim_time, scenario):
         (len(fuel_history) + 1e-6)
     )
 
-    avg_queue = np.mean(queue_history)
+    avg_queue = float(np.mean(queue_history)) if queue_history else 0.0
 
     avg_wait = (
-        np.mean(waiting_history) /
+        float(np.mean(waiting_history)) /
         (total_vehicles_passed + 1e-6)
-    )
+    ) if waiting_history else 0.0
 
-    avg_speed = np.mean(speed_history)
+    avg_speed = float(np.mean(speed_history)) if speed_history else 0.0
 
-    fairness = 1 - (
-        np.std(queue_history) /
-        (np.mean(queue_history) + 1e-6)
-    )
+    if queue_history:
+        fairness = 1 - (
+            float(np.std(queue_history)) /
+            (float(np.mean(queue_history)) + 1e-6)
+        )
+    else:
+        fairness = 0.0
 
     throughput = (
         total_vehicles_passed / sim_time
     )
+
+    result = {
+        "Run_ID": run_id,
+        "Seed": seed,
+        "Scenario": scenario,
+        "Simulation_Time_sec": sim_time,
+        "Vehicles_Passed": total_vehicles_passed,
+        "Avg_Travel_Time_sec": avg_travel_time,
+        "Avg_Waiting_Time_sec_per_vehicle": avg_wait,
+        "Avg_Queue_Length_vehicles": avg_queue,
+        "Total_CO2_kg": total_co2,
+        "Avg_CO2_kg": avg_co2,
+        "Total_Fuel_L": total_fuel_used,
+        "Avg_Fuel_L": avg_fuel,
+        "Avg_Speed_kmh": avg_speed,
+        "Fairness_Index": fairness,
+        "Weather": weather_map[env.envs[0].weather],
+        "Zone_Type": zone_map[env.envs[0].zone_type],
+        "Road_Capacity": env.envs[0].road_capacity,
+        "Throughput_vehicles_per_sec": throughput
+    }
+
+    print_run_result(result)
+
+    traci.close()
+
+    return result
 
     # ======================================================
     # RESULT PRINT
@@ -457,47 +587,66 @@ def run_simulation(run_id, sim_time, scenario):
 
 if __name__ == "__main__":
 
-    NUM_RUNS = 3
+    parser = argparse.ArgumentParser(description="Run a single traffic scenario simulation")
+    parser.add_argument(
+        "--scenario",
+        choices=["Low", "Medium", "High"],
+        default="Low",
+        help="Traffic scenario to run"
+    )
+    parser.add_argument(
+        "--runs",
+        type=int,
+        default=30,
+        help="Number of simulation runs"
+    )
+    parser.add_argument(
+        "--duration",
+        type=int,
+        default=400,
+        help="Simulation duration in seconds"
+    )
+    args = parser.parse_args()
 
-    SIM_TIMES = [60, 120, 300]
-
-    SCENARIOS = [
-        "Low",
-        "Medium",
-        "High"
-    ]
+    NUM_RUNS = args.runs
+    SIM_TIMES = [args.duration]
+    scenario = args.scenario
 
     all_results = []
 
     run_id = 1
 
-    for scenario in SCENARIOS:
+    for sim_time in SIM_TIMES:
 
-        for sim_time in SIM_TIMES:
+        for _ in range(NUM_RUNS):
 
-            for _ in range(NUM_RUNS):
+            result = run_simulation(
+                run_id,
+                sim_time,
+                scenario
+            )
 
-                result = run_simulation(
-                    run_id,
-                    sim_time,
-                    scenario
-                )
+            all_results.append(result)
 
-                all_results.append(result)
-
-                run_id += 1
+            run_id += 1
 
     # ======================================================
     # SAVE CSV
     # ======================================================
 
+    print_final_summary(all_results)
+
     keys = all_results[0].keys()
 
     from datetime import datetime
 
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+
     csv_name = (
-        f"context_results_"
-        f"{datetime.now():%Y%m%d_%H%M%S}.csv"
+        os.path.join(
+            RESULTS_DIR,
+            f"context_results_{datetime.now():%Y%m%d_%H%M%S}.csv"
+        )
     )
 
     with open(csv_name, "w", newline="") as f:
@@ -511,4 +660,5 @@ if __name__ == "__main__":
 
         writer.writerows(all_results)
 
-    print(f"\n✅ All runs completed & saved to {csv_name}")
+    print()
+    print(f"All runs completed. CSV saved to: {csv_name}")

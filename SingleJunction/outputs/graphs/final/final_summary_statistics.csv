@@ -1,3 +1,3 @@
-System,Run,Seed,SimulationTime,WaitingTime,TravelTime,Throughput,VehiclesPassed,FuelConsumption,CO2Emission,AvgQueue,AvgSpeedKmph,FairnessIndex,PassedCars,PassedBikes,PassedTrucks,PassedBuses,PassedMotorcycles,PassedRickshaws,PassedEmergencyVehicles,PassedOtherVehicles,RoadCapacity
-Adaptive Context PPO,4.0,2027.0,300.0,19.206666666666667,29.74666666666667,0.492,147.66666666666666,3.6771,11.372066666666667,3.7466666666666666,7.31,0.4423333333333333,56.0,29.0,8.666666666666666,7.333333333333333,9.666666666666666,26.0,11.0,0.0,0.749
-Fixed,3.0,2027.0,300.0,185.51666666666665,34.85,0.39200000000000007,117.66666666666667,3.4150000000000005,10.562733333333332,8.503333333333332,5.963333333333334,0.5453333333333333,38.666666666666664,25.0,7.0,6.0,9.0,22.0,10.0,0.0,
+System,Run,WaitingTime,TravelTime,Throughput,VehiclesPassed,FuelConsumption,CO2Emission,AvgQueue,AvgSpeedKmph,FairnessIndex,PassedCars,PassedBikes,PassedTrucks,PassedBuses,PassedMotorcycles,PassedRickshaws,PassedEmergencyVehicles,PassedOtherVehicles
+Adaptive Context PPO,5.5,60.334,29.064,0.4321,259.3,6.0839,18.8004,5.348000000000001,9.104,0.18580000000000002,121.9,42.3,15.4,9.0,26.4,39.0,5.3,0.0
+Fixed,5.5,150.441,32.973,0.395,237.0,6.06302,18.73452,7.141,7.539,,109.5,40.5,14.3,9.0,25.1,33.4,5.2,0.0
