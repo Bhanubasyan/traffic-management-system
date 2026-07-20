@@ -23,6 +23,17 @@ Thumbs.db
 venv/
 ENV/
 
+**/.venv/
+**/venv/
+**/__pycache__/
+
+**/models/
+**/outputs/
+
+*.pt
+*.pth
+*.csv
+
 # Model checkpoints / binary weights
 models/*.pt
 models/*.pth

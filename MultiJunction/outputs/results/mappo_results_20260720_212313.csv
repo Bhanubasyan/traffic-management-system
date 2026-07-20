@@ -1,2 +1,0 @@
-Run_ID,Model,Simulation_Time_sec,Vehicles_Passed,Evaluation_Reward,Throughput_vehicles_per_sec,Avg_Waiting_Time_sec_per_vehicle,Avg_Travel_Time_sec,Avg_Queue_Length_vehicles,Avg_Speed_kmh,Fairness_Index,Total_CO2_kg,Avg_CO2_kg_per_step,Total_Fuel_L,Avg_Fuel_L_per_step
-1,mappo_v2.pt,2500.0,483,-52.2812,0.1932,0.09877018633540373,64.10973084886129,10.124,28.664474955997417,0.559451367425893,75.10697158746741,0.15021394317493483,24.348693647743765,0.04869738729548753
